@@ -1,13 +1,13 @@
 # https://python-poetry.org/docs/pyproject/
 [tool.poetry]
-name = "mypkg128"
+name = "energy-study"
 version = "0.1.0"
 description = "Basic python repository template"
 authors = ["Clément Brutti-Mairesse <clement.brutti.mairesse@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/ClementBM/basic-python-repository-template"
-repository = "https://github.com/ClementBM/basic-python-repository-template"
+homepage = "https://github.com/ClementBM/energy-study"
+repository = "https://github.com/ClementBM/energy-study"
 keywords = ["mykeyword", "mykeyword", "mykeyword"]
 include = [
     "LICENSE",
@@ -23,6 +23,9 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
+tslearn = "^0.5.2"
+pandas = "^1.5.2"
+matplotlib = "^3.6.2"
 
 [tool.poetry.dev-dependencies]
 pylint = "*"
@@ -35,11 +38,6 @@ black = "*"
 sphinx = "*"
 sphinx-rtd-theme = "*"
 coverage = "*"
-
-# New scripts
-# After installing the mypkg128 package, running mypkg128 will call the main() function from mypkg128/__init__.py.
-# [tool.poetry.scripts]
-# mypkg128 = 'mypkg128:main'
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

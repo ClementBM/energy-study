@@ -23,7 +23,7 @@ jobs:
       - name: install dependencies
         run: poetry install
       - name: run tests
-        run: poetry run coverage run --source='mypkg128' -m pytest
+        run: poetry run coverage run --source='energy_study' -m pytest
       - name: code coverage report
         run: poetry run coverage report
       - name: Build code coverage html files

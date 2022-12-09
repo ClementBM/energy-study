@@ -1,7 +1,7 @@
 # Introduction
 Template repository for python package.
 
-After duplicating this repository, you may rename the default package name, which is `mypkg128`, with your package name wherever it is declared.
+After duplicating this repository, you may rename the default package name, which is `energy-study`, with your package name wherever it is declared.
 So rename it in:
 * `pyproject.toml`
 * `tests.yaml`
@@ -51,11 +51,11 @@ poetry publish -r testpypi
 
 ## Installation with pip
 ```shell
-pip install --index-url https://test.pypi.org/simple/ mypkg128
+pip install --index-url https://test.pypi.org/simple/ energy-study
 ```
 or
 ```shell
-pip3 install --index-url https://test.pypi.org/simple/ mypkg128
+pip3 install --index-url https://test.pypi.org/simple/ energy-study
 ```
 
 # Code of Conduct
