@@ -61,3 +61,23 @@ pip3 install --index-url https://test.pypi.org/simple/ energy-study
 # Code of Conduct
 
 # History (changelog)
+
+## Misc
+```shell
+curl -X POST -H "content-type:application/json" -d '{"swaggerUrl":"https://petstore.swagger.io/v2/swagger.json"}' https://generator.swagger.io/api/gen/clients/python
+```
+
+you can POST to https://generator.swagger.io/api/gen/clients/{language} with the following HTTP body
+
+```json
+{
+  "options": {
+    "packageName": "energ_study"
+  },
+  "spec": {
+
+  }
+}
+```
+
+https://generator.swagger.io/#/clients/generateClient
