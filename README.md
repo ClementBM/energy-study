@@ -1,12 +1,3 @@
-# Introduction
-Template repository for python package.
-
-After duplicating this repository, you may rename the default package name, which is `energy-study`, with your package name wherever it is declared.
-So rename it in:
-* `pyproject.toml`
-* `tests.yaml`
-* `launch.json`
-
 # Development setup
 ## Prerequisites
 This following packages must be installed
@@ -62,7 +53,7 @@ pip3 install --index-url https://test.pypi.org/simple/ energy-study
 
 # History (changelog)
 
-## Misc
+## Swagger
 ```shell
 curl -X POST -H "content-type:application/json" -d '{"swaggerUrl":"https://petstore.swagger.io/v2/swagger.json"}' https://generator.swagger.io/api/gen/clients/python
 ```
@@ -80,4 +71,48 @@ you can POST to https://generator.swagger.io/api/gen/clients/{language} with the
 }
 ```
 
+### Swagger code generation
+https://swagger.io/tools/swagger-codegen/
+Online generator for api client
+
+```shell
+curl -X POST -H "content-type:application/json" -d '{"swaggerUrl":"https://petstore.swagger.io/v2/swagger.json"}' https://generator.swagger.io/api/gen/clients/ruby
+```
+
 https://generator.swagger.io/#/clients/generateClient
+
+## RTE API
+https://data.rte-france.com/catalog/consumption
+
+Il est conseillé de faire un appel par heure à ce service et de ne pas dépasser une période de 155 jours par appel.
+
+
+## Prediction J-1 Error
+
+The residuals are the rescaled one-step prediction errors
+$$
+\hat{W_t} = (X_t - \hat{X_t}) / \sqrt{r_{t-1}}
+$$
+
+$$
+r_{t-1} = E(X_t - \hat{X_t}) / \sigma^2
+$$
+
+$\sigma^2$ is the white noise variance of the fitted model
+
+To check the appropriateness of the model we therefore examine the residual series $\hat{W_t}$, and check that it resembles a realization of a white noise sequence.
+
+* Plot
+* QQ-Plot (normal)
+* QQ-Plot (t-distr)
+* Histogram
+* ACF/PACF
+* ACF Abs vals/Squares
+* Tests of randomness
+
+
+
+* distribution
+* descriptive statistics: mean, median, std, ...
+* ACF and PACF
+* stationarity ?
