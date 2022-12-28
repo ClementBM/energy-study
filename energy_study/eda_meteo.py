@@ -22,8 +22,6 @@ from energy_study.ts_toolbox import descriptive_metrics, normality
 
 sns.set(rc={"figure.figsize": (14, 10)})
 
-df = pd.read_json(BASE_DIR / "donnees-synop-essentielles-omm.json")
-
 df = pd.read_csv(
     BASE_DIR / "donnees-synop-essentielles-omm-2020.csv",
     delimiter=";",
@@ -32,12 +30,32 @@ df = pd.read_csv(
     infer_datetime_format=True,
 )
 
+df["Date"] = pd.to_datetime(df["Date"], utc=True, errors="coerce")
+df = df.dropna(subset=["Nebulosité totale"])
+
 df = df.set_index("Date")
+df = df.sort_index()
+df["Year"] = df.index.year
+df["Month"] = df.index.month_name()
+df["Day"] = df.index.day_name()
 
-df.sort_index()
+selected_column = [
+    "Nebulosité totale",
+    "Direction du vent moyen 10 mn",
+    "Vitesse du vent moyen 10 mn",
+    "Temps présent",
+    "Temps présent.1",
+    "Température (°C)",
+    "Précipitations dans les 24 dernières heures",
+    "Coordonnees",
+    "Nom",
+    "communes (name)",
+    "department (name)",
+    "region (name)",
+    "mois_de_l_annee",
+    "Year",
+    "Month",
+    "Day",
+]
 
-df["Date"] = [datetime.fromisoformat(date) for date in df["Date"]]
-
-"2020-04-24T23:00:00+02:00"
-
-pd.to_datetime(df["Date"]).dt.normalize()
+df = df[selected_column]
