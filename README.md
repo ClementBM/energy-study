@@ -116,3 +116,32 @@ To check the appropriateness of the model we therefore examine the residual seri
 * descriptive statistics: mean, median, std, ...
 * ACF and PACF
 * stationarity ?
+
+
+# Open Data
+
+Données de modèle de prévision d'ensemble arpege
+
+donneespubliques.meteofrance.fr
+
+## ECMWF Data
+
+```json
+{
+    "url"   : "https://api.ecmwf.int/v1",
+    "key"   : "XXX",
+    "email" : "XXX"
+}
+```
+
+https://confluence.ecmwf.int/display/WEBAPI/Access+ECMWF+Public+Datasets
+
+See Public Datasets on https://apps.ecmwf.int/datasets/
+
+```shell
+pip install ecmwf-api-client
+```
+
+```shell
+sudo apt -y install libgeos-dev
+```

@@ -1,15 +1,17 @@
 from datetime import datetime
-from random import random
 
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 import statsmodels.api as sm
 import statsmodels.tsa.api as smt
-from matplotlib import pyplot
 from pandas.plotting import autocorrelation_plot
 from scipy.stats import norm, uniform, t
+from energy_study.ts_toolbox import (
+    plot_nrj,
+    descriptive_metrics,
+    plot_seasonality,
+    tsplot,
+)
 
 from energy_study.common import (
     BASE_DIR,
@@ -44,59 +46,6 @@ df["Day"] = df.index.day_name()
 
 df["Prevision_Error"] = df["Prévision J-1"] - df["Consommation"]
 df["fossil_sum"] = df[FOSSIL_SOURCES].sum(axis=1)
-
-
-def plot_nrj(nrj_names):
-    plt.figure(figsize=(18, 12))
-    for i, nrj_name in enumerate(nrj_names):
-        plt.subplot(len(nrj_names) + 1, 1, i + 1)
-        plt.plot(df[nrj_name].ravel(), "r-")
-        plt.title(nrj_name, fontsize=10, pad="2.0")
-        plt.xticks([])
-
-    plt.subplot(len(nrj_names) + 1, 1, len(nrj_names) + 1)
-    plt.plot(df.index, df[nrj_names].sum(axis=1).ravel(), "r-")
-    plt.title("Somme", fontsize=10, pad="2.0")
-
-
-def plot_seasonality(df, columns, seasonality="Month"):
-    """
-    Heures
-    """
-    fig, axes = plt.subplots(len(columns), 1, figsize=(11, 10), sharex=True)
-    for name, ax in zip(columns, axes):
-        sns.boxplot(data=df, x=seasonality, y=name, ax=ax)
-        ax.set_ylabel("MW")
-        ax.set_title(name)
-        # Remove the automatic x-axis label from all but the bottom subplot
-        if ax != axes[-1]:
-            ax.set_xlabel("")
-        else:
-            ax.tick_params(axis="x", rotation=45)
-
-
-def tsplot(y, lags=None, title="", figsize=(14, 8)):
-    """Examine the patterns of ACF and PACF, along with the time series plot and histogram.
-
-    Original source: https://tomaugspurger.github.io/modern-7-timeseries.html
-    """
-    fig = plt.figure(figsize=figsize)
-    layout = (2, 2)
-    ts_ax = plt.subplot2grid(layout, (0, 0))
-    hist_ax = plt.subplot2grid(layout, (0, 1))
-    acf_ax = plt.subplot2grid(layout, (1, 0))
-    pacf_ax = plt.subplot2grid(layout, (1, 1))
-
-    y.plot(ax=ts_ax)
-    ts_ax.set_title(title)
-    y.plot(ax=hist_ax, kind="hist", bins=25)
-    hist_ax.set_title("Histogram")
-    smt.graphics.plot_acf(y, lags=lags, ax=acf_ax)
-    smt.graphics.plot_pacf(y, lags=lags, ax=pacf_ax)
-    [ax.set_xlim(0) for ax in [acf_ax, pacf_ax]]
-    sns.despine()
-    plt.tight_layout()
-    return ts_ax, acf_ax, pacf_ax
 
 
 plot_nrj(NRJ_SOURCES)
@@ -165,20 +114,6 @@ tsplot(df["Prevision_Error"].diff().dropna(), lags=48)
 
 autocorrelation_plot(df["Prevision_Error"].diff().dropna())
 autocorrelation_plot(df["Prevision_Error"])
-
-# Random walk differenciation
-random_walk = list()
-random_walk.append(-1 if random() < 0.5 else 1)
-for i in range(1, 1000):
-    movement = -1 if random() < 0.5 else 1
-    value = random_walk[i - 1] + movement
-    random_walk.append(value)
-
-# line plot
-autocorrelation_plot(random_walk)
-pyplot.show()
-
-tsplot(pd.DataFrame(random_walk), 250)
 
 
 normality(df, "Prevision_Error").T
