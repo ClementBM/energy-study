@@ -1,10 +1,7 @@
 from tslearn.clustering import TimeSeriesKMeans, silhouette_score
 from energy_study.common import (
-    FOSSIL_SOURCES,
-    NRJ_DETAILED_SOURCES,
-    NRJ_SOURCES,
-    RENEWABLE_SOURCES,
     BASE_DIR,
+    DataColumnSpec,
 )
 import pandas as pd
 from datetime import datetime
@@ -30,9 +27,9 @@ df["Day"] = df.index.day_name()
 
 
 df["Prevision_Error"] = df["Prévision J-1"] - df["Consommation"]
-df["fossil_sum"] = df[FOSSIL_SOURCES].sum(axis=1)
+df["fossil_sum"] = df[DataColumnSpec.FOSSIL_SOURCES].sum(axis=1)
 
-df_nrj = df[NRJ_SOURCES + ["Prevision_Error", "fossil_sum"]]
+df_nrj = df[DataColumnSpec.ENERGY_SOURCES + ["Prevision_Error", "fossil_sum"]]
 
 df_nrj = df_nrj.resample("1H").mean()
 

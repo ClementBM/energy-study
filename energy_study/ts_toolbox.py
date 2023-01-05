@@ -61,37 +61,48 @@ def tsplot(y, lags=None, title="", figsize=(14, 8)):
 
     y.plot(ax=ts_ax)
     ts_ax.set_title(title)
+    ts_ax.set_xlabel("Time steps")
     y.plot(ax=hist_ax, kind="hist", bins=25)
-    hist_ax.set_title("Histogram")
+    hist_ax.set_xlabel("Values")
     smt.graphics.plot_acf(y, lags=lags, ax=acf_ax)
+    acf_ax.set_xlabel("Lags (h)")
+
     smt.graphics.plot_pacf(y, lags=lags, ax=pacf_ax)
+    pacf_ax.set_xlabel("Lags (h)")
+
     [ax.set_xlim(0) for ax in [acf_ax, pacf_ax]]
     sns.despine()
     plt.tight_layout()
     return ts_ax, acf_ax, pacf_ax
 
 
-def plot_nrj(nrj_names):
+def plot_nrj(df, nrj_names, unit, zoom=slice(0, -1), show_sum=True):
     plt.figure(figsize=(18, 12))
     for i, nrj_name in enumerate(nrj_names):
-        plt.subplot(len(nrj_names) + 1, 1, i + 1)
-        plt.plot(df[nrj_name].ravel(), "r-")
+        ax = plt.subplot(len(nrj_names) + 1, 1, i + 1)
+        ax.set_ylabel(unit)
+        if i == len(nrj_names) - 1 and show_sum == False:
+            plt.plot(df.index[zoom], df[nrj_name].ravel()[zoom], "r-")
+            plt.title(nrj_name, fontsize=10, pad="2.0")
+            continue
+        plt.plot(df[nrj_name].ravel()[zoom], "r-")
         plt.title(nrj_name, fontsize=10, pad="2.0")
         plt.xticks([])
 
-    plt.subplot(len(nrj_names) + 1, 1, len(nrj_names) + 1)
-    plt.plot(df.index, df[nrj_names].sum(axis=1).ravel(), "r-")
-    plt.title("Somme", fontsize=10, pad="2.0")
+    if show_sum:
+        plt.subplot(len(nrj_names) + 1, 1, len(nrj_names) + 1)
+        plt.plot(df.index[zoom], df[nrj_names].sum(axis=1).ravel()[zoom], "r-")
+        plt.title("SUM", fontsize=10, pad="2.0")
 
 
-def plot_seasonality(df, columns, seasonality="Month"):
+def plot_seasonality(df, columns, unit, seasonality="Month"):
     """
     Heures
     """
     fig, axes = plt.subplots(len(columns), 1, figsize=(11, 10), sharex=True)
     for name, ax in zip(columns, axes):
         sns.boxplot(data=df, x=seasonality, y=name, ax=ax)
-        ax.set_ylabel("MW")
+        ax.set_ylabel(unit)
         ax.set_title(name)
         # Remove the automatic x-axis label from all but the bottom subplot
         if ax != axes[-1]:

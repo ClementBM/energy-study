@@ -7,10 +7,7 @@ from tslearn.neighbors import KNeighborsTimeSeries
 from tslearn.utils import to_time_series_dataset
 import seaborn as sns
 from energy_study.common import (
-    FOSSIL_SOURCES,
-    NRJ_DETAILED_SOURCES,
-    NRJ_SOURCES,
-    RENEWABLE_SOURCES,
+    DataColumnSpec,
     BASE_DIR,
 )
 
@@ -55,12 +52,12 @@ df["Day"] = df.index.day_name()
 
 
 df["Prevision_Error"] = df["Prévision J-1"] - df["Consommation"]
-df["fossil_sum"] = df[FOSSIL_SOURCES].sum(axis=1)
+df["fossil_sum"] = df[DataColumnSpec.FOSSIL_SOURCES].sum(axis=1)
 
 
 k_values = 12 * int(len(df) / 12)
 
-selected_columns = NRJ_SOURCES + ["Prevision_Error", "fossil_sum"]
+selected_columns = DataColumnSpec.ENERGY_SOURCES + ["Prevision_Error", "fossil_sum"]
 df_nrj = df[selected_columns]
 
 # Consommation - Prévision J

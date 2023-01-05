@@ -1,119 +1,188 @@
-from datetime import datetime
-
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import statsmodels.api as sm
 import statsmodels.tsa.api as smt
 from pandas.plotting import autocorrelation_plot
-from scipy.stats import norm, uniform, t
+from scipy.stats import norm, t, uniform
+from statsmodels.tsa.arima.model import ARIMA
+
+from energy_study.common import DataColumnSpec
+from energy_study.data_preprocessing import prepare_data
+from energy_study.ts_stationarity import StationarityTests
 from energy_study.ts_toolbox import (
-    plot_nrj,
     descriptive_metrics,
+    normality,
+    plot_nrj,
     plot_seasonality,
     tsplot,
 )
-
-from energy_study.common import (
-    BASE_DIR,
-    FOSSIL_SOURCES,
-    NRJ_DETAILED_SOURCES,
-    NRJ_SOURCES,
-    RENEWABLE_SOURCES,
-)
-from energy_study.ts_toolbox import descriptive_metrics, normality
-
-sns.set(rc={"figure.figsize": (14, 10)})
-
-df = pd.read_csv(
-    BASE_DIR / "eCO2mix_RTE_Annuel-Definitif_2020.xls",
-    delimiter="\t",
-    index_col=False,
-)
+import math
 
 
-df = df[df["Consommation"].notna()]
-df["DateTime"] = [
-    datetime.strptime(f"{date} {hour}", "%Y-%m-%d %H:%M")
-    for date, hour in zip(df["Date"], df["Heures"])
+df = prepare_data("eCO2mix_RTE_Annuel-Definitif_2020.xls")
+
+column_mappings = DataColumnSpec.mappings()
+prevision_error_col = DataColumnSpec.PREVISION_ERROR.__name__
+renewable_cols = [
+    column_mappings[col_name] for col_name in DataColumnSpec.RENEWABLE_SOURCES
 ]
+energy_cols = [column_mappings[col_name] for col_name in DataColumnSpec.ENERGY_SOURCES]
 
-df = df.set_index("DateTime")
+# Data integrity, none ? constant time step ?
 
-df["Year"] = df.index.year
-df["Month"] = df.index.month_name()
-df["Day"] = df.index.day_name()
+# General visualization
+covid_1 = slice(7 * 48 * 10, 7 * 48 * 12)
+covid_2 = slice(7 * 48 * 42, 7 * 48 * 43)
+christmas_2 = slice(7 * 48 * 51, 7 * 48 * 54)
 
-
-df["Prevision_Error"] = df["Prévision J-1"] - df["Consommation"]
-df["fossil_sum"] = df[FOSSIL_SOURCES].sum(axis=1)
-
-
-plot_nrj(NRJ_SOURCES)
-plot_nrj(RENEWABLE_SOURCES)
-
-plot_seasonality(df, columns=RENEWABLE_SOURCES, seasonality="Heures")
-plot_seasonality(df, columns=RENEWABLE_SOURCES, seasonality="Month")
-plot_seasonality(df, columns=RENEWABLE_SOURCES, seasonality="Day")
-
-
-plot_seasonality(
+plot_nrj(
     df,
-    columns=["Prevision_Error", "Consommation"],
-    seasonality="Heures",
+    [
+        column_mappings[DataColumnSpec.FORECAST],
+        column_mappings[DataColumnSpec.CONSUMPTION],
+        prevision_error_col,
+    ],
+    unit="GW",
+    zoom=covid_1,
+    show_sum=False,
 )
+
+plot_nrj(df, energy_cols, unit="GW", zoom=covid_1)
+plot_nrj(df, renewable_cols, unit="GW")
+
+
+# Error superior than 5 GW
+df["IS_EXTREME"] = df[prevision_error_col].abs() > 5
+
+sns.scatterplot(
+    x=df.index,
+    y=prevision_error_col,
+    hue="IS_EXTREME",
+    style="IS_EXTREME",
+    data=df,
+)
+
+
+autocorr_1 = (
+    df[prevision_error_col]
+    .rolling(48 * 7)
+    .apply(lambda x: x.autocorr(lag=1), raw=False)
+)
+autocorr_1.plot()
+
+autocorr_2 = (
+    df[prevision_error_col]
+    .rolling(48 * 7)
+    .apply(lambda x: x.autocorr(lag=2), raw=False)
+)
+autocorr_2.plot()
+
+
+autocorr_6 = (
+    df[prevision_error_col]
+    .rolling(48 * 7)
+    .apply(lambda x: x.autocorr(lag=6), raw=False)
+)
+autocorr_6.plot()
+
+autocorr_12 = (
+    df[prevision_error_col]
+    .rolling(48 * 7)
+    .apply(lambda x: x.autocorr(lag=12), raw=False)
+)
+autocorr_12.plot()
+
+np.corrcoef(
+    [
+        autocorr_1.dropna().to_numpy(),
+        autocorr_2.dropna().to_numpy(),
+        autocorr_6.dropna().to_numpy(),
+        autocorr_12.dropna().to_numpy(),
+    ]
+)
+
+
+## Box plot seasonality
+
+plot_seasonality(df, columns=renewable_cols, unit="GW", seasonality="Hour")
+plot_seasonality(df, columns=renewable_cols, unit="GW", seasonality="Month")
+plot_seasonality(df, columns=renewable_cols, unit="GW", seasonality="Day")
+
+
 plot_seasonality(
     df,
-    columns=["Prevision_Error", "Consommation"],
+    columns=[
+        prevision_error_col,
+        column_mappings[DataColumnSpec.CONSUMPTION],
+    ],
+    unit="GW",
+    seasonality="Hour",
+)
+
+df[df[prevision_error_col].abs() < 5]
+plot_seasonality(
+    df,
+    columns=[
+        prevision_error_col,
+        column_mappings[DataColumnSpec.CONSUMPTION],
+    ],
+    unit="GW",
     seasonality="Month",
 )
 plot_seasonality(
     df,
-    columns=["Prevision_Error", "Consommation"],
+    columns=[
+        prevision_error_col,
+        column_mappings[DataColumnSpec.CONSUMPTION],
+    ],
+    unit="GW",
     seasonality="Day",
 )
 
 sns.lineplot(
     x=df.index,
-    y="Prevision_Error",
+    y=prevision_error_col,
     hue="Day",
     style="Day",
     data=df,
 )
 
-df.groupby(by="Month")["Prevision_Error"].plot(figsize=(14, 10), marker="o")
+df.groupby(by="Month")[prevision_error_col].plot(figsize=(14, 10), marker="o")
 
-df.groupby(by="Heures")["Prevision_Error"].plot(figsize=(14, 10), kind="density")
-df.groupby(by="Day")["Prevision_Error"].plot(figsize=(14, 10), kind="density")
-df.groupby(by="Month")["Prevision_Error"].plot(figsize=(14, 10), kind="density")
-
-descriptive_metrics(df, "Prevision_Error")
-
-df.groupby(by="Heures")["Prevision_Error"].agg(["mean", "count"])
-df.groupby(by="Day")["Prevision_Error"].agg(["mean", "count"])
-df.groupby(by="Month")["Prevision_Error"].agg(["mean", "count"])
+df.groupby(by="Hour")[prevision_error_col].plot(figsize=(14, 10), kind="density")
+df.groupby(by="Day")[prevision_error_col].plot(figsize=(14, 10), kind="density")
+df.groupby(by="Month")[prevision_error_col].plot(figsize=(14, 10), kind="density")
 
 
-df["Prevision_Error"].hist(by=df["Heures"], bins=30, figsize=(14, 10))
-df["Prevision_Error"].hist(by=df["Day"], bins=30, figsize=(14, 10))
-df["Prevision_Error"].hist(by=df["Month"], bins=30, figsize=(14, 10))
-df["Prevision_Error"].hist(bins=40, figsize=(14, 10))
+df.groupby(by="Hour")[prevision_error_col].agg(["mean", "std", "count"])
+df.groupby(by="Day")[prevision_error_col].agg(["mean", "std", "count"])
+df.groupby(by="Month")[prevision_error_col].agg(["mean", "std", "count"])
 
 
-smt.graphics.plot_acf(df["Prevision_Error"], lags=48)
+df[prevision_error_col].hist(by=df["Hour"], bins=30, figsize=(14, 10))
+df[prevision_error_col].hist(by=df["Day"], bins=30, figsize=(14, 10))
+df[prevision_error_col].hist(by=df["Month"], bins=30, figsize=(14, 10))
+df[prevision_error_col].hist(bins=40, figsize=(14, 10))
 
-smt.graphics.plot_pacf(df["Prevision_Error"], lags=48)
-smt.graphics.plot_pacf(df["Prevision_Error"].diff().dropna(), lags=48)
+
+smt.graphics.plot_acf(df[prevision_error_col], lags=50)
+smt.graphics.plot_acf(df[prevision_error_col].diff().dropna(), lags=48 * 3)
+
+smt.graphics.plot_pacf(df[prevision_error_col], lags=50)
+smt.graphics.plot_pacf(df[prevision_error_col].diff().dropna(), lags=48 * 3)
 
 
-tsplot(df["Prevision_Error"], lags=48)
-tsplot(df["Prevision_Error"], lags=48 * 2)
-tsplot(df["Prevision_Error"], lags=48 * 3)
-tsplot(df["Prevision_Error"].pow(2), lags=48 * 3)
-tsplot(df["Prevision_Error"].abs(), lags=48 * 3)
-tsplot(df["Prevision_Error"].diff().dropna(), lags=48)
+tsplot(df[prevision_error_col], lags=48)
+tsplot(df[prevision_error_col], lags=48 * 2)
+tsplot(df[prevision_error_col], lags=48 * 3)
+tsplot(df[prevision_error_col].pow(2), lags=48 * 3)
+tsplot(df[prevision_error_col].abs(), lags=48 * 3)
+tsplot(df[prevision_error_col].diff().dropna(), lags=48)
 
-autocorrelation_plot(df["Prevision_Error"].diff().dropna())
-autocorrelation_plot(df["Prevision_Error"])
+autocorrelation_plot(df[prevision_error_col].diff().dropna())
+autocorrelation_plot(df[prevision_error_col])
 
 
 normality(df, "Prevision_Error").T

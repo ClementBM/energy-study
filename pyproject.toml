@@ -36,6 +36,7 @@ pygrib = "^2.1.4"
 cartopy = "^0.21.1"
 cfgrib = "^0.9.10.3"
 ecmwflibs = "^0.5.0"
+rpy2 = "^3.5.6"
 
 [tool.poetry.dev-dependencies]
 pylint = "*"

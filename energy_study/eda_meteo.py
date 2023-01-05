@@ -13,10 +13,6 @@ from scipy.stats import norm, uniform, t
 
 from energy_study.common import (
     BASE_DIR,
-    FOSSIL_SOURCES,
-    NRJ_DETAILED_SOURCES,
-    NRJ_SOURCES,
-    RENEWABLE_SOURCES,
 )
 from energy_study.ts_toolbox import descriptive_metrics, normality
 
