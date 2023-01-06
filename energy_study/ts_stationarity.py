@@ -8,13 +8,11 @@ class StationarityTests:
         self.is_stationary = None
         self.max_lag = max_lag
 
-    def adf(self, timeseries, diff=0, printResults=True):
+    def adf(self, timeseries, diff=0, return_df=True):
         ts = timeseries.copy()
         if diff > 0:
             for _ in range(diff):
                 ts = ts.diff()
-
-        ts = ts.dropna()
 
         # Dickey-Fuller test
         if self.max_lag:
@@ -28,34 +26,35 @@ class StationarityTests:
         else:
             is_stationary = False
 
-        if printResults:
-            df_results = pd.Series(
-                adf_test[0:4],
-                index=[
-                    "ADF Test Statistic",
-                    "p-Value",
-                    "# Lags Used",
-                    "# Observations Used",
-                ],
-            )
+        if return_df:
+            critical_labels = [
+                "ADF Test Statistic",
+                "p-Value",
+                "# Lags Used",
+                "# Observations Used",
+            ]
+            critical_values = list(adf_test[0:4])
 
             # Add Critical Values
             for key, value in adf_test[4].items():
-                df_results["Critical Value (%s)" % key] = value
+                critical_labels.append("Critical Value (%s)" % key)
+                critical_values.append(value)
 
-            print("Augmented Dickey-Fuller Test Results:")
-            print(df_results)
+            df_results = pd.DataFrame(
+                critical_values,
+                index=critical_labels,
+            )
+
+            return df_results
 
         return p_value, is_stationary
 
-    def kpss(self, timeseries, diff=0, printResults=True):
+    def kpss(self, timeseries, diff=0, return_df=True):
         ts = timeseries.copy()
 
         if diff > 0:
             for _ in range(diff):
                 ts = ts.diff()
-
-        ts = ts.dropna()
 
         if self.max_lag:
             kpss_test = kpss(ts, regression="c", nlags=self.max_lag)
@@ -69,22 +68,24 @@ class StationarityTests:
         else:
             is_stationary = False
 
-        if printResults:
-            df_results = pd.Series(
-                kpss_test[0:3],
-                index=[
-                    "KPSS test Statistic",
-                    "p-Value",
-                    "# Lags Used",
-                ],
-            )
-
+        if return_df:
             # Add Critical Values
-            for key, value in kpss_test[3].items():
-                df_results["Critical Value (%s)" % key] = value
+            critical_labels = [
+                "KPSS test Statistic",
+                "p-Value",
+                "# Lags Used",
+            ]
+            critical_values = list(kpss_test[0:3])
 
-            print("KPSS Test Results:")
-            print(df_results)
+            for key, value in kpss_test[3].items():
+                critical_labels.append("Critical Value (%s)" % key)
+                critical_values.append(value)
+
+            df_results = pd.DataFrame(
+                critical_values,
+                index=critical_labels,
+            )
+            return df_results
 
         return p_value, is_stationary
 

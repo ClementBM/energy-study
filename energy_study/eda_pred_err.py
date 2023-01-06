@@ -20,21 +20,21 @@ from energy_study.ts_toolbox import (
 )
 import math
 
-
 df = prepare_data("eCO2mix_RTE_Annuel-Definitif_2020.xls")
 
 column_mappings = DataColumnSpec.mappings()
-prevision_error_col = DataColumnSpec.PREVISION_ERROR.__name__
+prevision_error_col = DataColumnSpec.FORECAST_ERROR.__name__
 renewable_cols = [
     column_mappings[col_name] for col_name in DataColumnSpec.RENEWABLE_SOURCES
 ]
 energy_cols = [column_mappings[col_name] for col_name in DataColumnSpec.ENERGY_SOURCES]
 
 # Data integrity, none ? constant time step ?
+pd.DataFrame(df.index).diff().groupby("DateTime").sum()
 
 # General visualization
 covid_1 = slice(7 * 48 * 10, 7 * 48 * 12)
-covid_2 = slice(7 * 48 * 42, 7 * 48 * 43)
+covid_2 = slice(7 * 48 * 42 + 10, 7 * 48 * 43 - 6)
 christmas_2 = slice(7 * 48 * 51, 7 * 48 * 54)
 
 plot_nrj(
@@ -45,7 +45,7 @@ plot_nrj(
         prevision_error_col,
     ],
     unit="GW",
-    zoom=covid_1,
+    zoom=christmas_2,
     show_sum=False,
 )
 
@@ -201,3 +201,8 @@ df_normalized = (df["Prevision_Error"] - df["Prevision_Error"].mean()) / df[
 # standardized and studentized residuals typically rescale
 # the residuals so that values of more than 1.96 from 0 equate
 # to a p-value of 0.05. Different software packages use terminology inconsistently.
+
+
+# ANOVA on hourly means ?
+# Deviation of consumption prevision error giving the month, ANOVA test on variance ?
+# Deviation of consumption prevision error giving the day, ANOVA test on variance ?

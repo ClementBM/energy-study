@@ -8,17 +8,34 @@ import seaborn as sns
 def descriptive_metrics(df, column_name):
 
     metrics = pd.DataFrame(
-        data={
-            "column": column_name,
-            "count": df[column_name].count(),
-            "median": df[column_name].median(),
-            "mean": df[column_name].mean(),
-            "std": df[column_name].std(),
-            "variance": df[column_name].var(),
-            "skewness": df[column_name].skew(),
-            "kurtosis": df[column_name].kurt(),
-        },
-        index=[0],
+        data=[
+            column_name,
+            df[column_name].count(),
+            df[column_name].mean(),
+            df[column_name].std(),
+            df[column_name].var(),
+            df[column_name].skew(),
+            df[column_name].kurt(),
+            df[column_name].min(),
+            df[column_name].quantile(q=0.25),
+            df[column_name].quantile(q=0.5),
+            df[column_name].quantile(q=0.75),
+            df[column_name].max(),
+        ],
+        index=[
+            "column",
+            "count",
+            "mean",
+            "std",
+            "variance",
+            "skewness",
+            "kurtosis",
+            "min",
+            "25%",
+            "median",
+            "75%",
+            "max",
+        ],
     )
 
     return metrics

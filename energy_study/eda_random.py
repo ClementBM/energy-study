@@ -7,6 +7,8 @@ from energy_study.ts_toolbox import (
     tsplot,
 )
 import pandas as pd
+from energy_study.ts_iid import IidTests
+from energy_study.ts_autocorrelation import AutocorrelationTests
 
 
 def gaussian_white_noise(n_sample):
@@ -76,3 +78,14 @@ z.rolling(50).apply(lambda x: x.autocorr(lag=1), raw=False).rolling(50).mean().p
 z.rolling(50).apply(lambda x: x.autocorr(lag=2), raw=False).rolling(50).mean().plot()
 
 tsplot(z.diff().dropna(), lags=LAGS)
+
+
+## Autocorrelation tests
+autocorrelation_tests = AutocorrelationTests(lags=[LAGS])
+print(autocorrelation_tests.ljung_box(z))
+autocorrelation_tests.mcleod_li(z.to_numpy())
+
+## Independence tests
+independence_tests = IidTests()
+independence_tests.turning_point(z.to_numpy())
+independence_tests.rank(z.to_numpy())

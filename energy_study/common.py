@@ -54,7 +54,7 @@ class DataColumnSpec:
     ]
 
     @classmethod
-    def PREVISION_ERROR(cls):
+    def FORECAST_ERROR(cls):
         return f"{cls.CONSUMPTION}-{cls.FORECAST}"
 
     @classmethod

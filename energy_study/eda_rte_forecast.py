@@ -5,7 +5,7 @@ import seaborn as sns
 import statsmodels.api as sm
 import statsmodels.tsa.api as smt
 from pandas.plotting import autocorrelation_plot
-from scipy.stats import norm, t, uniform
+from scipy.stats import norm, t, uniform, jarque_bera
 from statsmodels.tsa.arima.model import ARIMA
 
 from energy_study.common import DataColumnSpec
@@ -18,20 +18,14 @@ from energy_study.ts_toolbox import (
     plot_seasonality,
     tsplot,
 )
-import math
-from rpy2.robjects.packages import importr
-from rpy2.robjects import FloatVector, r
+from energy_study.ts_iid import IidTests
+from energy_study.ts_autocorrelation import AutocorrelationTests
 
-# Import R functions
-# TSA => McLeod.Li.test
-importr("TSA")
-# spgs => turningpoint.test(n)
-importr("spgs")
 
 df = prepare_data("eCO2mix_RTE_Annuel-Definitif_2020.xls")
 
 column_mappings = DataColumnSpec.mappings()
-prevision_error_col = DataColumnSpec.PREVISION_ERROR.__name__
+prevision_error_col = DataColumnSpec.FORECAST_ERROR.__name__
 renewable_cols = [
     column_mappings[col_name] for col_name in DataColumnSpec.RENEWABLE_SOURCES
 ]
@@ -45,78 +39,83 @@ model = ARIMA(
     seasonal_order=(1, 0, 0, 48),
 )
 model_fit = model.fit()
+
+# sns.residplot
+
 ## summary of fit model
-print(model_fit.summary())
+print(model_fit.summary().to_markdown())
 
 x = pd.DataFrame(model_fit.resid)
 
-# Statistical tests
-x.describe()
-descriptive_metrics(x, prevision_error_col)
+# Basic informations
+print(descriptive_metrics(x, 0).T.to_markdown())
 x.plot()
 
-ax = x.plot(kind="kde")
-x_norm = np.linspace(-10, 10, 200)
-plt.plot(x_norm, norm.pdf(x_norm, x.mean(), x.std()))
-ax.set_xlim(-7, 7)
-
-## Ljung Box Portmanteau test
-sm.stats.acorr_ljungbox(x, lags=[48 * 2, 48 * 3], return_df=True)
-
-## McLeod Li Portmanteau teast
-x_for_r = FloatVector(x.ravel())  # converted R float vector
-mcleod_li_result = r["McLeod.Li.test"](y=x_for_r)
-
-list(dict(zip(mcleod_li_result.names, list(mcleod_li_result)))["p.values"])
-
-## Turning point test
-turning_point_result = r["turningpoint.test"](x_for_r)
-list(dict(zip(turning_point_result.names, list(turning_point_result)))["p.value"])
-
-## Rank test
-rank_test_result = r["rank.test"](x_for_r)
-list(dict(zip(rank_test_result.names, list(rank_test_result)))["p.value"])
-
-## Yule-Walker
-model = ARIMA(
-    x,
-    order=([0, 1, 2, 3, 4, 5], 0, 0),
-)
-model_fit = model.fit(method="yule_walker")
-print(model_fit.summary())
-
-## Jarque Bera
-
-# density plot of residuals
-x.plot(kind="kde")
-
-sm.qqplot(
-    x.to_numpy().ravel(),
-    norm,
-    loc=x.mean(),
-    scale=x.std(),
-    fit=False,
-    line="45",
-)
-
-
 # Rolling statistics
-x.rolling(window=48).mean().plot(
-    title="Forecast error rolling mean", ylabel="GW", xlabel="Time"
-)
-x.rolling(window=48).std().plot(
-    title="Forecast error rolling standard deviation", ylabel="GW", xlabel="Time"
-)
-
+pd.DataFrame(
+    {
+        "Forecast error rolling mean": x.rolling(window=48).mean().to_numpy().ravel(),
+        "Forecast error rolling standard deviation": x.rolling(window=48)
+        .std()
+        .to_numpy()
+        .ravel(),
+    },
+    index=x.index,
+).plot(ylabel="GW", xlabel="Time")
 
 # Correlogram
 tsplot(x, lags=48 * 2)
 tsplot(x, lags=48 * 3)
+
+## Autocorrelation tests
+autocorrelation_tests = AutocorrelationTests(lags=[48 * 2, 48 * 3])
+print(autocorrelation_tests.ljung_box(x))
+autocorrelation_tests.mcleod_li(x)
+
+## Turning point test
+independence_tests = IidTests()
+print(independence_tests.turning_point(x).to_markdown())
+
+## Rank test
+print(independence_tests.rank(x).to_markdown())
 
 
 # Stationarity test
 ## Up to 3 day lag
 
 stationarity_test = StationarityTests(significance=0.05, max_lag=48 * 3)
-stationarity_test.kpss(x)
-stationarity_test.adf(x)
+print(stationarity_test.kpss(x, return_df=True).T.to_markdown())
+print(stationarity_test.adf(x).T.to_markdown())
+
+
+## Yule-Walker
+model = ARIMA(
+    x,
+    order=([1, 2, 3, 4, 5, 6, 7, 8, 9], 0, 0),
+)
+model.fit(method="yule_walker").summary()
+
+model_AR0 = ARIMA(
+    x,
+    order=(0, 0, 0),
+)
+model_AR0.fit(method="yule_walker").summary()
+
+## Jarque Bera
+jarque_bera(x)
+
+# density plot of residuals
+ax = x.plot(kind="kde")
+x_norm = np.linspace(-10, 10, 200)
+plt.plot(x_norm, norm.pdf(x_norm, x.mean(), x.std()))
+ax.set_xlim(-7, 7)
+
+
+sm.qqplot(
+    x.to_numpy().ravel(),
+    norm,
+    loc=float(x.mean()),
+    scale=float(x.std()),
+    fit=False,
+    line="45",
+)
