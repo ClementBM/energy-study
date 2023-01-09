@@ -11,18 +11,14 @@ class AutocorrelationTests:
 
     def ljung_box(self, x):
         """
-        Ljung Box Portmanteau test
-
-        Ljung-Box test is a test for autocorrelation in either raw data or model residuals.
+        Ljung-Box Portmanteau test is a test for autocorrelation in either raw data or model residuals.
         """
         ljungbox_result = sm.stats.acorr_ljungbox(x, lags=self.lags, return_df=True)
         return ljungbox_result.to_markdown()
 
     def mcleod_li(self, x):
         """
-        McLeod Li Portmanteau test
-
-        McLeod-Li test is a test for autoregressive conditional heteroskedasticity
+        McLeod-Li Portmanteau test is a test for autoregressive conditional heteroskedasticity
         on raw data or residuals.
         The test checks for the presence of conditional heteroscedascity by
         computing the Ljung-Box (port-manteau) test with the squared data

@@ -1,16 +1,13 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import statsmodels.api as sm
 import statsmodels.tsa.api as smt
 from pandas.plotting import autocorrelation_plot
-from scipy.stats import norm, t, uniform
-from statsmodels.tsa.arima.model import ARIMA
+from scipy.stats import norm, t
 
 from energy_study.common import DataColumnSpec
 from energy_study.data_preprocessing import prepare_data
-from energy_study.ts_stationarity import StationarityTests
 from energy_study.ts_toolbox import (
     descriptive_metrics,
     normality,
@@ -18,7 +15,7 @@ from energy_study.ts_toolbox import (
     plot_seasonality,
     tsplot,
 )
-import math
+import calendar
 
 df = prepare_data("eCO2mix_RTE_Annuel-Definitif_2020.xls")
 
@@ -106,9 +103,26 @@ np.corrcoef(
 
 ## Box plot seasonality
 
-plot_seasonality(df, columns=renewable_cols, unit="GW", seasonality="Hour")
-plot_seasonality(df, columns=renewable_cols, unit="GW", seasonality="Month")
-plot_seasonality(df, columns=renewable_cols, unit="GW", seasonality="Day")
+plot_seasonality(
+    df,
+    columns=renewable_cols,
+    unit="GW",
+    seasonality="Hour",
+)
+plot_seasonality(
+    df,
+    columns=renewable_cols,
+    unit="GW",
+    seasonality="Month",
+    order=list(calendar.month_name)[1:],
+)
+plot_seasonality(
+    df,
+    columns=renewable_cols,
+    unit="GW",
+    seasonality="Day",
+    order=list(calendar.day_name),
+)
 
 
 plot_seasonality(
@@ -130,6 +144,7 @@ plot_seasonality(
     ],
     unit="GW",
     seasonality="Month",
+    order=list(calendar.month_name)[1:],
 )
 plot_seasonality(
     df,
@@ -139,6 +154,7 @@ plot_seasonality(
     ],
     unit="GW",
     seasonality="Day",
+    order=list(calendar.day_name),
 )
 
 sns.lineplot(
@@ -177,6 +193,7 @@ smt.graphics.plot_pacf(df[prevision_error_col].diff().dropna(), lags=48 * 3)
 tsplot(df[prevision_error_col], lags=48)
 tsplot(df[prevision_error_col], lags=48 * 2)
 tsplot(df[prevision_error_col], lags=48 * 3)
+tsplot(df[prevision_error_col], lags=360)
 tsplot(df[prevision_error_col].pow(2), lags=48 * 3)
 tsplot(df[prevision_error_col].abs(), lags=48 * 3)
 tsplot(df[prevision_error_col].diff().dropna(), lags=48)

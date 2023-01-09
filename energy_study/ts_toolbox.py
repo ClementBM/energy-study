@@ -112,13 +112,13 @@ def plot_nrj(df, nrj_names, unit, zoom=slice(0, -1), show_sum=True):
         plt.title("SUM", fontsize=10, pad="2.0")
 
 
-def plot_seasonality(df, columns, unit, seasonality="Month"):
+def plot_seasonality(df, columns, unit, seasonality="Month", order=None):
     """
     Heures
     """
     fig, axes = plt.subplots(len(columns), 1, figsize=(11, 10), sharex=True)
     for name, ax in zip(columns, axes):
-        sns.boxplot(data=df, x=seasonality, y=name, ax=ax)
+        sns.boxplot(data=df, x=seasonality, order=order, y=name, ax=ax)
         ax.set_ylabel(unit)
         ax.set_title(name)
         # Remove the automatic x-axis label from all but the bottom subplot
